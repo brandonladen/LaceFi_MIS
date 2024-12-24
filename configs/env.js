@@ -4,11 +4,9 @@ const logger = require('../common/logger');
 
 function loadEnvConfig() {
   try {
-    const result = dotenv.config({ path: path.join(__dirname, '../.env') });
-    
-    if (result.error) {
-      throw result.error;
-    }
+    // Attempt to load the .env file
+    const envPath = path.join(__dirname, '../.env');
+    dotenv.config({ path: envPath });
 
     // Validate required environment variables
     const requiredEnvVars = [
@@ -19,7 +17,10 @@ function loadEnvConfig() {
     const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
     if (missingEnvVars.length > 0) {
-      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+      logger.warn(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+      if (process.env.NODE_ENV !== 'production') {
+        throw new Error(`Ensure the .env file exists and contains: ${missingEnvVars.join(', ')}`);
+      }
     }
 
     logger.info('Environment variables loaded successfully');
