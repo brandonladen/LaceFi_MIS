@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscriptions - Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Subscriptions</h1>
+            <a href="/home" class="btn btn-outline-primary me-2">Home</a>
+        </div>
+
+        <!-- Filters Form -->
+        <form method="get" action="/subscriptions" class="mb-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="routerName" class="form-label">Filter by Router</label>
+                    <select name="routerName"  class="form-select">
+                        <option value="">Select Router</option>
+                        <% routerNames.forEach(function(router) { %>
+                          <option value="<%= router.router_name %>" <%= router.router_name === routerName ? 'selected' : '' %> >
+                            <%= router.router_name %>
+                          </option>
+                        <% }); %>
+                      </select>                      
+                </div>
+
+                <div class="col-md-4">
+                    <label for="subscriptionType" class="form-label">Filter by Type</label>
+                    <select name="subscriptionType" id="subscriptionType" class="form-select">
+                        <option value="">All Types</option>
+                        <% subscriptionTypes.forEach(function(type) { %>
+                            <option value="<%= type %>" <%= type === subscriptionType ? 'selected' : '' %>><%= type %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex">
+                        <!-- Apply Filters Button -->
+                        <button type="submit" class="btn btn-success w-50 me-2">Apply Filters</button>
+                        <!-- Clear Filters Button -->
+                        <a href="/subscriptions" class="btn btn-secondary w-50">Clear Filters</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Subscribers List -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Current Subscribers</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>P.Code</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>R.Name</th>
+                                <th>R.Location</th>
+                                <% if (userRole === 'super admin') { %>
+                                <th>Actions</th>
+                                <% } %>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% subscribers.forEach(function(sub) { %>
+                            <tr>
+                                <td><%= sub.name %></td>
+                                <td><%= sub.phone_number %></td>
+                                <td><%= sub.payment_code %></td>
+                                <td>KES <%= sub.amount %></td>
+                                <td><%= sub.subscription_type %></td>
+                                <td><%= new Date(sub.payment_date).toLocaleString('en-GB', { 
+                                    weekday: 'short', 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    hour12: true 
+                                }) %></td>
+                                <td><%= new Date(sub.subscription_end_date).toLocaleString('en-GB', { 
+                                    weekday: 'short', 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    hour12: true 
+                                }) %></td>
+                                <td><%= sub.router_name %></td>
+                                <td><%= sub.router_location %></td>
+                                <% if (userRole === 'super admin') { %>
+                                <td>
+                                    <button type="button" class="btn btn-warning btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editModal" 
+                                            data-id="<%= sub.id %>"
+                                            data-name="<%= sub.name %>"
+                                            data-phone="<%= sub.phone_number %>"
+                                            data-code="<%= sub.payment_code %>"
+                                            data-amount="<%= sub.amount %>"
+                                            data-type="<%= sub.subscription_type %>"
+                                            data-start="<%= sub.payment_date %>"
+                                            data-end="<%= sub.subscription_end_date %>"
+                                            data-router="<%= sub.router_name %>"
+                                            data-location="<%= sub.router_location %>">
+                                        Edit
+                                    </button>
+                                    <form action="/subscriptions/delete/<%= sub.id %>" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" 
+                                                onclick="return confirm('Are you sure you want to delete this subscription?')">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </td>
+                                <% } %>
+                            </tr>
+                            <% }); %>
+                        </tbody>                        
+                    </table>
+                </div>
+            </div>
+        </div>
+           <!-- Financial Summary -->
+           <div class="card mb-4">
+            <div class="card-header">
+                <h4>Financial Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Revenue</h5>
+                                <p class="card-text">KES <%= totalAmount %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>   
+
+    <!-- Modal for Editing Subscription -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- Form action URL with dynamic subscription ID -->
+            <form action="" method="POST" id="editSubscriptionForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="phone_number" name="phone_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_code" class="form-label">Payment Code</label>
+                        <input type="text" class="form-control" id="payment_code" name="payment_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="text" class="form-control" id="amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subscription_type" class="form-label">Subscription Type</label>
+                        <select class="form-select" id="subscription_type" name="subscription_type" required>
+                            <option value="Weekly">Weekly</option>
+                            <option value="Monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_date" class="form-label">Payment Date and Time</label>
+                        <input type="datetime-local" class="form-control" id="payment_date" name="payment_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subscription_end_date" class="form-label">Subscription End Date and Time</label>
+                        <input type="datetime-local" class="form-control" id="subscription_end_date" name="subscription_end_date" required readonly>
+                    </div>                  
+                    <div class="mb-3">
+                        <label for="router_name" class="form-label">Router Name</label>
+                        <input type="text" class="form-control" id="router_name" name="router_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="router_location" class="form-label">Router Location</label>
+                        <input type="text" class="form-control" id="router_location" name="router_location" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateEndDate() {
+        var subscriptionType = document.getElementById('subscription_type').value;
+        var paymentDate = document.getElementById('payment_date').value;
+
+        if (!paymentDate) return;
+
+        var startDate = new Date(paymentDate);
+        var endDate;
+
+        // Calculate the end date based on subscription type, preserving the time
+        if (subscriptionType === 'Weekly') {
+            endDate = new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+        } else if (subscriptionType === 'Monthly') {
+            endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 1);
+        }
+
+        // Format the datetime for the input
+        var endDateFormatted = endDate.toISOString().slice(0, 16);
+        document.getElementById('subscription_end_date').value = endDateFormatted;
+    }
+
+    // Event listeners
+    document.getElementById('subscription_type').addEventListener('change', updateEndDate);
+    document.getElementById('payment_date').addEventListener('change', updateEndDate);
+
+    // Populate modal fields
+    var editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var id = button.getAttribute('data-id');
+        var name = button.getAttribute('data-name');
+        var phone = button.getAttribute('data-phone');
+        var code = button.getAttribute('data-code');
+        var amount = button.getAttribute('data-amount');
+        var type = button.getAttribute('data-type');
+        var start = button.getAttribute('data-start');
+        var end = button.getAttribute('data-end');
+        var router = button.getAttribute('data-router');
+        var location = button.getAttribute('data-location');
+
+        var modalTitle = editModal.querySelector('.modal-title');
+        var modalName = editModal.querySelector('#name');
+        var modalPhone = editModal.querySelector('#phone_number');
+        var modalCode = editModal.querySelector('#payment_code');
+        var modalAmount = editModal.querySelector('#amount');
+        var modalType = editModal.querySelector('#subscription_type');
+        var modalStart = editModal.querySelector('#payment_date');
+        var modalEnd = editModal.querySelector('#subscription_end_date');
+        var modalRouter = editModal.querySelector('#router_name');
+        var modalLocation = editModal.querySelector('#router_location');
+
+        // Parse the dates and adjust for timezone
+        function adjustDateForTimezone(dateStr) {
+            const date = new Date(dateStr);
+            // Create date string with timezone offset preserved
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // Set values in the modal fields
+        modalName.value = name;
+        modalPhone.value = phone;
+        modalCode.value = code;
+        modalAmount.value = amount;
+        modalType.value = type;
+        modalStart.value = adjustDateForTimezone(start);
+        modalEnd.value = adjustDateForTimezone(end);
+        modalRouter.value = router;
+        modalLocation.value = location;
+
+        // Update form action with the subscription ID
+        var form = editModal.querySelector('form');
+        form.action = '/subscriptions/edit/' + id;
+    });
+</script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+</body>
+</html>
