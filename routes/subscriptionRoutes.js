@@ -7,44 +7,50 @@ const logger = require('../common/logger');
 
 // Get all subscribers with filters applied
 router.get('/', async (req, res) => {
-    const { routerName, subscriptionType } = req.query;
-    
-    try {
-        const routerNames = db.prepare('SELECT DISTINCT router_name FROM subscribers').all();
-        const subscriptionTypes = ['monthly', 'weekly'];
-        
-        let query = 'SELECT * FROM subscribers WHERE 1=1';
-        let params = [];
-        
-        if (routerName) {
-            query += ' AND router_name = ?';
-            params.push(routerName);
-        }
-        if (subscriptionType) {
-            query += ' AND subscription_type = ?';
-            params.push(subscriptionType);
-        }
-        
-        const subscribers = db.prepare(query).all(...params);
-        const totalAmount = subscribers.reduce((total, sub) => total + sub.amount, 0);
-        
-        res.render('subscriptions/list', {
-            subscribers,
-            totalAmount,
-            routerNames,
-            subscriptionTypes,
-            routerName,
-            subscriptionType,
-            userRole: req.user?.role || 'user' // Pass the user role from auth middleware
-        });
-    } catch (error) {
-        logger.error('Error fetching subscriptions:', error);
-        res.status(500).render('error', { 
-            message: 'Failed to fetch subscriptions', 
-            error: error.message 
-        });
-    }
+  const { routerName, subscriptionType, endDate } = req.query;
+
+  try {
+      const routerNames = db.prepare('SELECT DISTINCT router_name FROM subscribers').all();
+      const subscriptionTypes = ['monthly', 'weekly'];
+
+      let query = 'SELECT * FROM subscribers WHERE 1=1';
+      let params = [];
+
+      if (routerName) {
+          query += ' AND router_name = ?';
+          params.push(routerName);
+      }
+      if (subscriptionType) {
+          query += ' AND subscription_type = ?';
+          params.push(subscriptionType);
+      }
+      if (endDate) {
+          query += ' AND  DATE(subscription_end_date) <= ?';
+          params.push(endDate);
+      }
+
+      const subscribers = db.prepare(query).all(...params);
+      const totalAmount = subscribers.reduce((total, sub) => total + sub.amount, 0);
+
+      res.render('subscriptions/list', {
+          subscribers,
+          totalAmount,
+          routerNames,
+          subscriptionTypes,
+          routerName,
+          subscriptionType,
+          endDate,
+          userRole: req.user?.role || 'user' // Pass the user role from auth middleware
+      });
+  } catch (error) {
+      logger.error('Error fetching subscriptions:', error);
+      res.status(500).render('error', { 
+          message: 'Failed to fetch subscriptions', 
+          error: error.message 
+      });
+  }
 });
+
 
   // Create new subscription
 router.post('/', [
