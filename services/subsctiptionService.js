@@ -131,7 +131,6 @@ class SubscriptionService {
   getFinancialSummary() {
     try {
         const totalRevenue = db.prepare('SELECT SUM(amount) as total FROM payments').get();
-        console.log(totalRevenue)
         return {
             total: totalRevenue.total || 0,
             weekly: db.prepare(`

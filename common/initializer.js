@@ -43,7 +43,46 @@ function initializeDatabase() {
           role TEXT DEFAULT 'user',  
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-      `);      
+      `);   
+      
+    // Add financial_transactions table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS financial_transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_type TEXT NOT NULL, -- 'income' or 'expense'
+        category TEXT NOT NULL, -- 'subscription', 'maintenance', 'operational', etc.
+        amount INTEGER NOT NULL,
+        description TEXT,
+        transaction_date DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add monthly_summaries table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS monthly_summaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        month DATE NOT NULL, -- Store as YYYY-MM-01
+        total_revenue INTEGER NOT NULL DEFAULT 0,
+        operational_cost INTEGER NOT NULL DEFAULT 0,
+        maintenance_cost INTEGER NOT NULL DEFAULT 0,
+        profit INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        description TEXT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        category TEXT NOT NULL,
+        transaction_type TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
     logger.info('Database initialized successfully');
   } catch (error) {

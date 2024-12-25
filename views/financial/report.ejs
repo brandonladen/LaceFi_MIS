@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Report - Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Financial Report</h1>
+            <div>
+                <a href="/home" class="btn btn-outline-primary me-2">Home</a>
+                <button onclick="window.print()" class="btn btn-success">Print Report</button>
+                <% if (transactions.userRole === 'admin') { %>
+                <a href="/F/dashboard" class="btn btn-outline-primary me-2">Update</a>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Revenue</h5>
+                        <h3 class="card-text">KES <%= transactions.totalRevenue %></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Operational Costs</h5>
+                        <h3 class="card-text">KES <%= transactions.operationalCost %></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Net Profit</h5>
+                        <h3 class="card-text">KES <%= transactions.profit %></h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Outstanding Amount</h5>
+                        <h3 class="card-text">KES <%= transactions.outstandingAmount %></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Breakdown Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Monthly Financial Breakdown</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Revenue</th>
+                                <th>Outstanding Amount</th>
+                                <th>Operational Cost</th>
+                                <th>Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% transactions.monthlyBreakdown.forEach(function(month) { %>
+                            <tr>
+                                <td><%= month.month %></td>
+                                <td>KES <%= month.totalRevenue %></td>
+                                <td>KES <%= month.profit %></td>
+                                <td>KES <%= month.operationalCost %></td>
+                                <td>KES <%= month.profit %></td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Recent Transactions</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% transactions.recentTransactions.forEach(function(transaction) { %>
+                            <tr>
+                                <td><%= new Date(transaction.date).toLocaleDateString() %></td>
+                                <td><%= transaction.description %></td>
+                                <td>
+                                    <span class="badge <%= transaction.type === 'income' ? 'bg-success' : 'bg-danger' %>">
+                                        <%= transaction.type %>
+                                    </span>
+                                </td>
+                                <td>KES <%= transaction.amount %></td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style type="text/css" media="print">
+        @media print {
+            .btn { display: none; }
+            .card { border: none; }
+            .table { border-color: #dee2e6 !important; }
+        }
+    </style>
+</body>
+</html>

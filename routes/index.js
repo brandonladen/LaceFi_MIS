@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { db } = require('../common/initializer');
 const { authenticateToken, checkSuperAdmin }  = require('../middlewares/authMiddleware');
+const financialRoutes = require('./financialRoutes');
 const { loadEnvConfig } = require('../configs/env');
 loadEnvConfig();
 
@@ -80,6 +81,8 @@ router.post('/subscriptions/delete/:id', authenticateToken, async (req, res) => 
 
 // Use subscription routes
 router.use('/subscriptions', authenticateToken, subscriptionRoutes);
+
+router.use('/F', authenticateToken, financialRoutes);
 
 // Render the login page
 router.get('/login', (req, res) => {
