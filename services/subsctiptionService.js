@@ -32,7 +32,7 @@ class SubscriptionService {
         payment_date, router_name, router_location 
       } = data;
   
-      const subscription_type = parseInt(amount) === 250 ? 'weekly' : 'monthly';
+      const subscription_type = parseInt(amount) === 150 ? 'weekly' : 'monthly';
       const startMoment = moment(payment_date);
       const subscription_end_date = subscription_type === 'weekly' 
         ? startMoment.clone().add(7, 'days')
@@ -83,7 +83,7 @@ class SubscriptionService {
       } = data;
 
       // Determine subscription type and calculate end date
-      const subscription_type = parseInt(amount) === 250 ? 'weekly' : 'monthly';
+      const subscription_type = parseInt(amount) === 150 ? 'weekly' : 'monthly';
       const startMoment = moment(payment_date);
       const subscription_end_date = subscription_type === 'weekly'
         ? startMoment.clone().add(7, 'days')
