@@ -81,36 +81,58 @@ class SubscriptionService {
         name, phone_number, payment_code, amount,
         payment_date, router_name, router_location 
       } = data;
-
-      // Determine subscription type and calculate end date
-      const subscription_type = parseInt(amount) === 150 ? 'weekly' : 'monthly';
-      const startMoment = moment(payment_date);
-      const subscription_end_date = subscription_type === 'weekly'
-        ? startMoment.clone().add(7, 'days')
-        : startMoment.clone().add(1, 'month');
-
-      const updateSubscriber = db.prepare(`
-        UPDATE subscribers 
-        SET name = ?, phone_number = ?, payment_code = ?, 
-            amount = ?, payment_date = ?, subscription_end_date = ?,
-            subscription_type = ?, router_name = ?, router_location = ?
-        WHERE id = ?
-      `);
-
-      const result = updateSubscriber.run(
-        name, phone_number, payment_code, amount,
-        startMoment.format('YYYY-MM-DD HH:mm:ss'),
-        subscription_end_date.format('YYYY-MM-DD HH:mm:ss'),
-        subscription_type, router_name, router_location, id
-      );
-
-      return result.changes > 0;
+  
+      // Fetch the current subscriber information, including the payment_code
+      const currentSubscriberRow = db.prepare(`
+        SELECT amount, payment_code FROM subscribers WHERE id = ?
+      `).get(id);
+  
+      if (currentSubscriberRow) {
+        const currentAmount = currentSubscriberRow.amount || 0;
+        const currentPaymentCode = currentSubscriberRow.payment_code || '';
+        const newAmount = parseFloat(currentAmount) + parseFloat(amount); // Add incoming amount to current amount
+  
+        // If the payment code is different, insert a new payment record
+        if (payment_code !== currentPaymentCode) {
+          const insertPayment = db.prepare(`
+            INSERT INTO payments (payment_code, amount, payment_date, subscriber_id)
+            VALUES (?, ?, ?, ?)
+          `);
+          insertPayment.run(payment_code, amount, payment_date, id);
+        }
+  
+        // Determine subscription type and calculate end date
+        const subscription_type = parseInt(amount) === 150 ? 'weekly' : 'monthly';
+        const startMoment = moment(payment_date);
+        const subscription_end_date = subscription_type === 'weekly'
+          ? startMoment.clone().add(7, 'days')
+          : startMoment.clone().add(1, 'month');
+  
+        const updateSubscriber = db.prepare(`
+          UPDATE subscribers 
+          SET name = ?, phone_number = ?, payment_code = ?, 
+              amount = ?, payment_date = ?, subscription_end_date = ?,
+              subscription_type = ?, router_name = ?, router_location = ?
+          WHERE id = ?
+        `);
+  
+        const result = updateSubscriber.run(
+          name, phone_number, payment_code, newAmount,
+          startMoment.format('YYYY-MM-DD HH:mm:ss'),
+          subscription_end_date.format('YYYY-MM-DD HH:mm:ss'),
+          subscription_type, router_name, router_location, id
+        );
+  
+        return result.changes > 0;
+      } else {
+        throw new Error('Subscriber not found');
+      }
     } catch (error) {
       logger.error('Error updating subscription:', error);
       throw error;
     }
   }
-
+  
   deleteSubscription(id) {
     try {
       return db.transaction(() => {
