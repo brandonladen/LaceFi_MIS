@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       const routerNames = db.prepare('SELECT DISTINCT router_name FROM subscribers').all();
       const subscriptionTypes = ['monthly', 'weekly'];
 
-      let query = 'SELECT * FROM subscribers WHERE 1=1';
+      let query = "SELECT * FROM subscribers WHERE 1=1 AND payment_code != 'REMOVED'"; // Exclude subscribers with payment_code = 'REMOVED'
       let params = [];
 
       if (routerName) {
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
           params.push(subscriptionType);
       }
       if (endDate) {
-          query += ' AND  DATE(subscription_end_date) <= ?';
+          query += ' AND DATE(subscription_end_date) <= ?';
           params.push(endDate);
       }
 
@@ -50,6 +50,7 @@ router.get('/', async (req, res) => {
       });
   }
 });
+
 
 
   // Create new subscription
