@@ -14,6 +14,7 @@ router.get('/', async (req, res) => {
       const subscriptionTypes = ['monthly', 'weekly'];
 
       let query = "SELECT * FROM subscribers WHERE 1=1 AND payment_code != 'REMOVED'"; // Exclude subscribers with payment_code = 'REMOVED'
+      // let query = "SELECT * FROM subscribers WHERE 1=1";
       let params = [];
 
       if (routerName) {
